@@ -3,7 +3,9 @@
 		"start": "tsc && node dist/System.js"
 	},
 	"dependencies": {
+		"@types/node-fetch": "^2.3.7",
 		"@types/puppeteer": "^1.12.4",
+		"node-fetch": "^2.6.0",
 		"puppeteer": "^1.17.0",
 		"typescript": "^3.5.2"
 	}
