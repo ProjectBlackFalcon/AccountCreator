@@ -1,0 +1,10 @@
+{
+	"scripts": {
+		"start": "tsc && node dist/System.js"
+	},
+	"dependencies": {
+		"@types/puppeteer": "^1.12.4",
+		"puppeteer": "^1.17.0",
+		"typescript": "^3.5.2"
+	}
+}
