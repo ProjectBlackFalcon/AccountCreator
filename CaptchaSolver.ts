@@ -1,10 +1,13 @@
-export async function captchaSolver(captchaIdentifier: string, twoCaptchaAPIKey: string): Promise<string> {
+import fetch from 'node-fetch'
+
+export async function invisibleCaptchaSolver(captchaIdentifier: string, twoCaptchaAPIKey: string): Promise<string> {
 	const request =
 		"http://2captcha.com/in.php?key=" +
 		twoCaptchaAPIKey +
 		"&method=userrecaptcha&googlekey=" +
 		captchaIdentifier +
-		"&json=true&pageurl=http://omegle.com";
+		"&json=true&pageurl=https://www.dofus.com/fr/creer-un-compte" +
+		"&invisible=1";
 	const result = await fetch(request);
 	const resultJSON = await result.json();
 	const requestID: string = resultJSON.request;
