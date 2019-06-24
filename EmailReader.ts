@@ -19,53 +19,77 @@ imap.once("end", function() {
 
 imap.connect();
 
-export const readEmailsSince = (date: Date) => {
-	imap.once("ready", function() {
-		openInbox((err: Error, box: Imap.Box) => {
-			if (err) {
-				throw err;
-			}
-			
-			imap.search(["UNSEEN"], function(err, results) {
-				if (err) throw err;
-				var f = imap.fetch(results, { bodies: "" });
-				
-				f.on("message", function(msg, seqno) {
-					console.log("Message #%d", seqno);
-					var prefix = "(#" + seqno + ") ";
-					msg.on("body", function(stream, info) {
-						console.log(prefix + "Body");
+export const readEmailsSince = async (date: Date) => {
+	const newLinks: string[] = [];
+
+	await new Promise((resolve, reject) => {
+		imap.once("ready", function() {
+			openInbox((err: Error, box: Imap.Box) => {
+				if (err) {
+					throw err;
+				}
+
+				imap.search(["UNSEEN"], function(err, results) {
+					if (err) throw err;
+					var f = imap.fetch(results, { bodies: ["HEADER.FIELDS (DATE)", "TEXT"] });
+
+					f.on("message", function(msg, seqno) {
 						let emailBody: Buffer;
-						stream.on("data", chunk => emailBody += chunk)
-						stream.on("end", () => {
-							const body = emailBody.toString()
-							const urlIndex = body.indexOf("https://www.dofus.com/fr/mmorpg/jouer?guid=");
-							if(urlIndex != -1){
-								const url = body.substr(urlIndex, 300).split(" ]")[0].replace(/=\r\n/g, "").replace(/=3D/g, "=")
-								console.log(body, url)	
-							}
-						})
+						let emailDate: Buffer;
+						msg.on("body", function(stream, info) {
+							stream.on("data", chunk => {
+								if (info.which === "TEXT") {
+									emailBody += chunk;
+								} else {
+									emailDate += chunk;
+								}
+							});
+
+							stream.on("end", () => {
+								const body = emailBody.toString("utf-8");
+								const date = emailDate.toString("utf-8");
+
+								const urlIndex = body.indexOf("https://www.dofus.com/fr/mmorpg/jouer?guid=");
+								const dateIndexes = [date.indexOf("undefinedDate: ") + "undefinedDate: ".length, date.indexOf("+0000")];
+
+								if (urlIndex != -1) {
+									const url = body
+										.substr(urlIndex, 300)
+										.split(" ]")[0]
+										.replace(/=\r\n/g, "")
+										.replace(/=3D/g, "=");
+
+									const utcMailDate = new Date(
+										new Date(date.substring(dateIndexes[0], dateIndexes[1])).getTime() -
+											new Date().getTimezoneOffset() * 60 * 1000
+									);
+									console.log(utcMailDate, (utcMailDate.getTime() - new Date().getTime()) / (60 * 1000));
+									console.log(url + "\n");
+
+									if (utcMailDate.getTime() > new Date().getTime()) {
+										newLinks.push(url);
+									}
+								}
+							});
+						});
 					});
-					msg.once("attributes", function(attrs) {
-						console.log(prefix + "Attributes: %s", inspect(attrs, false, 8));
+
+					f.once("error", function(err) {
+						console.log("Fetch error: " + err);
+						reject();
 					});
-					msg.once("end", function() {
-						console.log(prefix + "Finished");
+
+					f.once("end", function() {
+						console.log("Done fetching all messages!");
+						imap.end();
+						resolve();
 					});
 				});
-				
-				f.once("error", function(err) {
-					console.log("Fetch error: " + err);
-				});
-				
-				f.once("end", function() {
-					console.log("Done fetching all messages!");
-					imap.end();
-				});
-				
 			});
 		});
-	});	
-}
+	});
 
-readEmailsSince(new Date())
+	return newLinks;
+};
+
+readEmailsSince(new Date());

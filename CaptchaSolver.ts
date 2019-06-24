@@ -1,4 +1,5 @@
-import fetch from 'node-fetch'
+import fetch from "node-fetch";
+import { TWO_CAPTCHA_API_KEY } from "./config";
 
 export async function invisibleCaptchaSolver(captchaIdentifier: string, twoCaptchaAPIKey: string): Promise<string> {
 	const request =
@@ -45,3 +46,7 @@ export async function invisibleCaptchaSolver(captchaIdentifier: string, twoCaptc
 
 	return solvedCaptcha;
 }
+
+(async () => {
+	console.log(await invisibleCaptchaSolver("6LfbFRsUAAAAACrqF5w4oOiGVxOsjSUjIHHvglJx", TWO_CAPTCHA_API_KEY));
+})();

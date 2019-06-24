@@ -1,6 +1,7 @@
 import { Page, launch, Browser } from "puppeteer";
 import { invisibleCaptchaSolver } from "./CaptchaSolver";
 import { TWO_CAPTCHA_API_KEY } from "./config";
+import { accountCreationRequest } from "./Fetch";
 
 class System {
 	browser?: Browser;
@@ -11,7 +12,7 @@ class System {
 		[this.page] = await this.browser.pages();
 	};
 
-	createAccount = async (username?: string, password?: string, date?: { day: number; month: number; year: number }) => {
+	createAccount = async (email: string, username: string, password: string, date: { day: number; month: number; year: number }) => {
 		if (!this.page || !this.browser) {
 			return;
 		}
@@ -25,73 +26,45 @@ class System {
 			return elementHTML.substr(elementHTML.indexOf("k=") + 2, 300).split("&")[0];
 		});
 
-		console.log("Captcha key", captchaKey)		
-		
-		const captchaResponse = await invisibleCaptchaSolver(captchaKey, TWO_CAPTCHA_API_KEY);
-		
-		console.log("Captcha response", captchaResponse)	
+		console.log("Obtained captcha key", captchaKey);
 
-		await this.page.type("#userlogin", "Hereticx2k", {delay: 50});
+		const solvedCaptcha = await invisibleCaptchaSolver(captchaKey, TWO_CAPTCHA_API_KEY);
+
+		console.log("Obtained captcha response", solvedCaptcha);
+
+		await this.page.type("#userlogin", username, { delay: 50 });
 		await this.page.waitForSelector("#user_password");
-		await this.page.type("#user_password", "hereticpasszord12(", {delay: 50});
+		await this.page.type("#user_password", password, { delay: 50 });
 		await this.page.waitForSelector("#user_mail");
-		await this.page.type("#user_mail", "hereticx2k@gmail.com", {delay: 50});
-		await this.page.waitFor(1000)	
-		await this.page.select("#ak_field_1", "1");
-		await this.page.waitFor(1000)
-		await this.page.select("#ak_field_2", "1");
-		await this.page.waitFor(1000)
-		await this.page.select("#ak_field_3", "1996");
+		await this.page.type("#user_mail", email, { delay: 50 });
+		await this.page.waitFor(1000);
+		await this.page.select("#ak_field_1", date.day.toString());
+		await this.page.waitFor(1000);
+		await this.page.select("#ak_field_2", date.month.toString());
+		await this.page.waitFor(1000);
+		await this.page.select("#ak_field_3", date.year.toString());
 
 		// To remove focus from the mail field so that the error event can be triggered.
 		await this.page.click("#userlogin");
 		await this.page.waitFor(500);
 		let errorFields = await this.checkFields(this.page);
 		if (errorFields.length) {
-			throw new Error("Field error " + JSON.stringify(errorFields));
-			process.exit();
+			console.log("Field error " + JSON.stringify(errorFields));
+			return;
 		}
-		
-		await this.page.evaluate(solvedCaptcha => {
-			// Typing the captcha solution we received from repatcha.
-			const googleCaptchaConfig = (<any>window)["___grecaptcha_cfg"].clients[0];
 
-			// This code finds the callback function within the web page.
-			// The object '___grecaptcha_cfg' has obfuscated attributes that change regularly.
-			// It is therefore important not to rely on the naming of those objects, but to rely on the callback function whose name does not change.
-			// This sends the data that we filled in the text area to google and validates the Captcha.
-			const findObject = (object: any, name: string): any => {
-				for (const key in object) {
-					if (Object.keys(object[key]).includes(name)) {
-						return object[key][name];
-					} else if (typeof object[key] === "object") {
-						const res = findObject(object[key], name);
-						if (res) {
-							return res;
-						}
-					}
-				}
-			};
+		console.log("No errors. Proceeding to account creation");
 
-			const callback = findObject(googleCaptchaConfig, "callback");
-			console.log(callback(solvedCaptcha));
-			console.log("Solved captcha!")
-		}, captchaResponse);
+		await accountCreationRequest({
+			username,
+			password,
+			email,
+			solvedCaptcha,
+			date
+		});
 		
-		await this.page.evaluate(captchaResponse => {
-			document.getElementById("g-recaptcha-response")!.innerHTML = captchaResponse
-		}, captchaResponse)
-
-		await this.page.click("#ak_field_4");
-		await this.page.waitFor(3000)
-		
-		const errors: HTMLCollection = await this.page.$$eval(".ak-register-error", elements => elements) as unknown as HTMLCollection
-		
-		if(errors.length){
-			console.log("The account couldn't be created, probably due to bot detection.")
-		}else{
-			console.log("Account creation successful.")
-		}
+		// Wait for a couple of seconds for the email to be sent
+		this.page.waitFor(10_000)
 	};
 
 	async checkFields(page: Page) {
@@ -110,5 +83,5 @@ class System {
 (async () => {
 	const system = new System();
 	await system.launchBrowser();
-	await system.createAccount();
+	//await system.createAccount();
 })();
