@@ -2,6 +2,7 @@ import { Page, launch, Browser } from "puppeteer";
 import { invisibleCaptchaSolver } from "./CaptchaSolver";
 import { TWO_CAPTCHA_API_KEY } from "./config";
 import { accountCreationRequest } from "./Fetch";
+import { readEmailsSince } from "./EmailReader";
 
 class System {
 	browser?: Browser;
@@ -12,7 +13,20 @@ class System {
 		[this.page] = await this.browser.pages();
 	};
 
-	createAccount = async (email: string, username: string, password: string, date: { day: number; month: number; year: number }) => {
+	createAccount = async ({
+		email,
+		username,
+		password,
+		date
+	}: {
+		email: string;
+		username: string;
+		password: string;
+		date: { day: number; month: number; year: number };
+	}) => {
+		// This token is so that only recent mails are analyzed and not all the inbox.
+		const dateSince = new Date(new Date().getTime());
+
 		if (!this.page || !this.browser) {
 			return;
 		}
@@ -62,9 +76,18 @@ class System {
 			solvedCaptcha,
 			date
 		});
-		
+
 		// Wait for a couple of seconds for the email to be sent
-		this.page.waitFor(10_000)
+		await this.page.waitFor(10_000);
+
+		console.log("Reading emails since")
+		const links = await readEmailsSince(dateSince);
+
+		console.log("Gathered a total of", links.length, "links.");
+
+		console.log(links);
+		
+		await this.page.goto(links[0])
 	};
 
 	async checkFields(page: Page) {
@@ -83,5 +106,10 @@ class System {
 (async () => {
 	const system = new System();
 	await system.launchBrowser();
-	//await system.createAccount();
+	await system.createAccount({
+		email: "",
+		username: "Heyatyuiopti",
+		password: "yessai123!",
+		date: { day: 6, month: 3, year: 1994 }
+	});
 })();

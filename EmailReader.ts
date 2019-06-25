@@ -1,28 +1,26 @@
 import * as Imap from "imap";
 import { EMAIL_CREDENTIALS } from "./config";
-import { inspect } from "util";
-import * as fs from "fs";
 
-const imap = new Imap(EMAIL_CREDENTIALS);
-
-function openInbox(cb: (error: Error, mailbox: Imap.Box) => void) {
-	imap.openBox("INBOX", true, cb);
-}
-
-imap.once("error", function(err: Error) {
-	console.log(err);
-});
-
-imap.once("end", function() {
-	console.log("Connection ended");
-});
-
-imap.connect();
-
-export const readEmailsSince = async (date: Date) => {
+export const readEmailsSince = async (dateSince: Date) => {
 	const newLinks: string[] = [];
 
 	await new Promise((resolve, reject) => {
+		const imap = new Imap(EMAIL_CREDENTIALS);
+
+		function openInbox(cb: (error: Error, mailbox: Imap.Box) => void) {
+			imap.openBox("INBOX", true, cb);
+		}
+
+		imap.once("error", function(err: Error) {
+			console.log(err);
+		});
+
+		imap.once("end", function() {
+			console.log("Connection ended");
+		});
+
+		imap.connect();
+
 		imap.once("ready", function() {
 			openInbox((err: Error, box: Imap.Box) => {
 				if (err) {
@@ -34,6 +32,7 @@ export const readEmailsSince = async (date: Date) => {
 					var f = imap.fetch(results, { bodies: ["HEADER.FIELDS (DATE)", "TEXT"] });
 
 					f.on("message", function(msg, seqno) {
+						console.log("Received message");
 						let emailBody: Buffer;
 						let emailDate: Buffer;
 						msg.on("body", function(stream, info) {
@@ -63,10 +62,10 @@ export const readEmailsSince = async (date: Date) => {
 										new Date(date.substring(dateIndexes[0], dateIndexes[1])).getTime() -
 											new Date().getTimezoneOffset() * 60 * 1000
 									);
-									console.log(utcMailDate, (utcMailDate.getTime() - new Date().getTime()) / (60 * 1000));
+									console.log(utcMailDate, (utcMailDate.getTime() - dateSince.getTime()) / (60 * 1000));
 									console.log(url + "\n");
 
-									if (utcMailDate.getTime() > new Date().getTime()) {
+									if (utcMailDate.getTime() > dateSince.getTime()) {
 										newLinks.push(url);
 									}
 								}
@@ -89,7 +88,5 @@ export const readEmailsSince = async (date: Date) => {
 		});
 	});
 
-	return newLinks;
+	return Array.from(new Set(newLinks));
 };
-
-readEmailsSince(new Date());

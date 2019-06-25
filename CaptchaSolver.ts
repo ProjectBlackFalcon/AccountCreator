@@ -46,7 +46,3 @@ export async function invisibleCaptchaSolver(captchaIdentifier: string, twoCaptc
 
 	return solvedCaptcha;
 }
-
-(async () => {
-	console.log(await invisibleCaptchaSolver("6LfbFRsUAAAAACrqF5w4oOiGVxOsjSUjIHHvglJx", TWO_CAPTCHA_API_KEY));
-})();

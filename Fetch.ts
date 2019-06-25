@@ -17,7 +17,7 @@ export const accountCreationRequest = async ({
 		date.year
 	}&parentemail=noreply%40ankama.com&sAction=submit&g-recaptcha-response=${solvedCaptcha}&_pjax=.ak-registerform-container`;
 
-	await fetch("https://www.dofus.com/fr/creer-un-compte", <any>{
+	console.log(await fetch("https://www.dofus.com/fr/creer-un-compte", <any>{
 		credentials: "include",
 		headers: {
 			accept: "text/html, */*; q=0.01",
@@ -32,5 +32,5 @@ export const accountCreationRequest = async ({
 		body,
 		method: "POST",
 		mode: "cors"
-	});
+	}))
 };
