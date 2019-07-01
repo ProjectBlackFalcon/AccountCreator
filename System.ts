@@ -1,6 +1,6 @@
 import { Page, launch, Browser } from "puppeteer";
 import { invisibleCaptchaSolver } from "./CaptchaSolver";
-import { TWO_CAPTCHA_API_KEY } from "./config";
+import { TWO_CAPTCHA_API_KEY, DOMAIN } from "./config";
 import { accountCreationRequest } from "./Fetch";
 import { readEmailsSince } from "./EmailReader";
 
@@ -19,7 +19,7 @@ class System {
 		password,
 		date
 	}: {
-		email: string;
+		email?: string;
 		username: string;
 		password: string;
 		date: { day: number; month: number; year: number };
@@ -31,20 +31,12 @@ class System {
 			return;
 		}
 
+		if (!email || (email && !email.length)) {
+			email = username + "@" + DOMAIN;
+		}
+
 		await this.page.goto("https://www.dofus.com/fr/creer-un-compte");
 		await this.page.waitForSelector("#userlogin");
-
-		// Page is loaded, start fetching captcha
-		const captchaKey = await this.page.$eval(".grecaptcha-logo", element => {
-			const elementHTML = element.innerHTML;
-			return elementHTML.substr(elementHTML.indexOf("k=") + 2, 300).split("&")[0];
-		});
-
-		console.log("Obtained captcha key", captchaKey);
-
-		const solvedCaptcha = await invisibleCaptchaSolver(captchaKey, TWO_CAPTCHA_API_KEY);
-
-		console.log("Obtained captcha response", solvedCaptcha);
 
 		await this.page.type("#userlogin", username, { delay: 50 });
 		await this.page.waitForSelector("#user_password");
@@ -67,7 +59,19 @@ class System {
 			return;
 		}
 
-		console.log("No errors. Proceeding to account creation");
+		console.log("No errors. Proceeding to captcha solving & account creation");
+
+		// Page is loaded, start fetching captcha
+		const captchaKey = await this.page.$eval(".grecaptcha-logo", element => {
+			const elementHTML = element.innerHTML;
+			return elementHTML.substr(elementHTML.indexOf("k=") + 2, 300).split("&")[0];
+		});
+
+		console.log("Obtained captcha key", captchaKey);
+
+		const solvedCaptcha = await invisibleCaptchaSolver(captchaKey, TWO_CAPTCHA_API_KEY);
+
+		console.log("Obtained captcha response", solvedCaptcha);
 
 		await accountCreationRequest({
 			username,
