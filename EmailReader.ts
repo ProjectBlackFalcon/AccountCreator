@@ -32,7 +32,6 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 					var f = imap.fetch(results, { bodies: ["HEADER.FIELDS (DATE)", "TEXT"] });
 
 					f.on("message", function(msg, seqno) {
-						console.log("Received message");
 						let emailBody: Buffer;
 						let emailDate: Buffer;
 						msg.on("body", function(stream, info) {
@@ -65,16 +64,13 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 											.replace(/=\r\n/g, "")
 											.replace(/=3D/g, "=");
 
-										
-										console.log(utcMailDate, (utcMailDate.getTime() - dateSince.getTime()) / (60 * 1000));
-										console.log(url + "\n");
-
 										if (utcMailDate.getTime() > dateSince.getTime()) {
 											newLinks.push(url);
 										}
 									}
 								}else{
-									const urlIndex = body.indexOf("Bienvenue dans la communauté Ankama");
+									console.log(body)
+									const urlIndex = body.indexOf("Bienvenue dans la communaut");
 
 									if (urlIndex != -1) {
 										console.log(utcMailDate, (utcMailDate.getTime() - dateSince.getTime()) / (60 * 1000));
@@ -106,3 +102,5 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 
 	return Array.from(new Set(newLinks));
 };
+
+readEmailsSince(new Date(), "SUCCESSFUL_ACCOUNT_CREATION")

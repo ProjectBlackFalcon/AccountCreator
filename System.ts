@@ -30,6 +30,10 @@ class System {
 		if (!this.page || !this.browser) {
 			return;
 		}
+		
+		if(!username.length){
+			
+		}
 
 		if (!email || (email && !email.length)) {
 			email = username + "@" + DOMAIN;
