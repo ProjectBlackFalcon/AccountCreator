@@ -1,11 +1,18 @@
 import * as Imap from "imap";
-import { EMAIL_CREDENTIALS } from "./config";
 
-export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRMATION" | "SUCCESSFUL_ACCOUNT_CREATION") => {
+export const readEmailsSince = async ({
+	dateSince,
+	subject,
+	emailCredentials
+}: {
+	dateSince: Date;
+	subject: "ADDRESS_CONFIRMATION" | "SUCCESSFUL_ACCOUNT_CREATION";
+	emailCredentials: { user: string; password: string; host: string; port: number; tls: boolean }
+}) => {
 	const newLinks: string[] = [];
 
 	await new Promise((resolve, reject) => {
-		const imap = new Imap(EMAIL_CREDENTIALS);
+		const imap = new Imap(emailCredentials);
 
 		function openInbox(cb: (error: Error, mailbox: Imap.Box) => void) {
 			imap.openBox("INBOX", true, cb);
@@ -13,10 +20,6 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 
 		imap.once("error", function(err: Error) {
 			console.log(err);
-		});
-
-		imap.once("end", function() {
-			console.log("Connection ended");
 		});
 
 		imap.connect();
@@ -49,13 +52,11 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 
 								const dateIndexes = [date.indexOf("undefinedDate: ") + "undefinedDate: ".length, date.indexOf("+0000")];
 								const utcMailDate = new Date(
-									new Date(date.substring(dateIndexes[0], dateIndexes[1])).getTime() -
-										new Date().getTimezoneOffset() * 60 * 1000
+									new Date(date.substring(dateIndexes[0], dateIndexes[1])).getTime() - new Date().getTimezoneOffset() * 60 * 1000
 								);
-								
+
 								if (subject === "ADDRESS_CONFIRMATION") {
 									const urlIndex = body.indexOf("https://www.dofus.com/fr/mmorpg/jouer?guid=");
-									
 
 									if (urlIndex != -1) {
 										const url = body
@@ -68,18 +69,14 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 											newLinks.push(url);
 										}
 									}
-								}else{
-									console.log(body)
+								} else {
 									const urlIndex = body.indexOf("Bienvenue dans la communaut");
 
 									if (urlIndex != -1) {
-										console.log(utcMailDate, (utcMailDate.getTime() - dateSince.getTime()) / (60 * 1000));
-										console.log("Account successfully created.");
-
 										if (utcMailDate.getTime() > dateSince.getTime()) {
 											newLinks.push("Successful account creation");
 										}
-									}	
+									}
 								}
 							});
 						});
@@ -91,7 +88,6 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 					});
 
 					f.once("end", function() {
-						console.log("Done fetching all messages!");
 						imap.end();
 						resolve();
 					});
@@ -102,5 +98,3 @@ export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRM
 
 	return Array.from(new Set(newLinks));
 };
-
-readEmailsSince(new Date(), "SUCCESSFUL_ACCOUNT_CREATION")

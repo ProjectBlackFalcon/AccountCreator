@@ -1,15 +1,17 @@
 import { Page, launch, Browser } from "puppeteer";
 import { invisibleCaptchaSolver } from "./CaptchaSolver";
-import { TWO_CAPTCHA_API_KEY, DOMAIN } from "./config";
 import { accountCreationRequest } from "./Fetch";
 import { readEmailsSince } from "./EmailReader";
+import * as config from './config.json'
+
+const {EMAIL_CREDENTIALS, TWO_CAPTCHA_API_KEY, DOMAIN} = config;
 
 class System {
 	browser?: Browser;
 	page?: Page;
 
 	launchBrowser = async () => {
-		this.browser = await launch({ headless: false });
+		this.browser = await launch({ headless: true });
 		[this.page] = await this.browser.pages();
 	};
 
@@ -30,9 +32,8 @@ class System {
 		if (!this.page || !this.browser) {
 			return;
 		}
-		
-		if(!username.length){
-			
+
+		if (!username.length) {
 		}
 
 		if (!email || (email && !email.length)) {
@@ -63,7 +64,7 @@ class System {
 			return;
 		}
 
-		console.log("No errors. Proceeding to captcha solving & account creation");
+		console.log("No errors. Proceeding to captcha solving & account creation.");
 
 		// Page is loaded, start fetching captcha
 		const captchaKey = await this.page.$eval(".grecaptcha-logo", element => {
@@ -75,7 +76,7 @@ class System {
 
 		const solvedCaptcha = await invisibleCaptchaSolver(captchaKey, TWO_CAPTCHA_API_KEY);
 
-		console.log("Obtained captcha response", solvedCaptcha);
+		console.log(solvedCaptcha.length > 100 ? "✔": "❌", "Obtained captcha response");
 
 		await accountCreationRequest({
 			username,
@@ -87,30 +88,23 @@ class System {
 
 		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
-
-		console.log("Reading emails since");
-		const links = await readEmailsSince(dateSince, "ADDRESS_CONFIRMATION");
-
-		console.log("Gathered a total of", links.length, "links.");
-
-		console.log(links);
+		const links = await readEmailsSince({dateSince, subject: "ADDRESS_CONFIRMATION", emailCredentials: EMAIL_CREDENTIALS});
+		console.log("Fetched links", links);
 
 		if (links.length > 0) {
 			await this.page.goto(links[0]);
 		} else {
-			console.log("Account was not successfully created.");
-			return;
+			console.log(`❌ Account was ${red(bold("not"))} successfully created.`);
+			return
 		}
 
 		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
-
-		const confirmationEmail = await readEmailsSince(dateSince, "SUCCESSFUL_ACCOUNT_CREATION");
-
+		const confirmationEmail = await readEmailsSince({dateSince, subject: "SUCCESSFUL_ACCOUNT_CREATION", emailCredentials: EMAIL_CREDENTIALS});
 		if (confirmationEmail.length > 0) {
-			console.log("Account was successfully created.");
+			console.log("✔", green("Account was successfully created."));
 		} else {
-			console.log("Account was not successfully created.");
+			console.log(`❌ Account was ${red(bold("not"))} successfully created.`);
 		}
 	};
 
@@ -127,14 +121,19 @@ class System {
 	}
 }
 
-(async () => {
-	const system = new System();
-	await system.launchBrowser();
-	await system.createAccount({
-		email: "",
-		username: "Heyyuipti",
-		password: "yessai123!",
-		date: { day: 6, month: 3, year: 1996 }
-	});
-	console.log("Done.");
-})();
+const red = (text: string): string => `\x1b[31m${text}\x1b[0m`;
+const green = (text: string): string => `\x1b[32m${text}\x1b[0m`;
+const yellow = (text: string): string => `\x1b[33m${text}\x1b[0m`;
+const bold = (text: string): string => `\x1b[1m${text}\x1b[0m`;
+
+// (async () => {
+// 	const system = new System();
+// 	await system.launchBrowser();
+// 	await system.createAccount({
+// 		email: "",
+// 		username: "Hdeyuidti",
+// 		password: "yessai123!",
+// 		date: { day: 9, month: 3, year: 1997 }
+// 	});
+// 	console.log(`✔ ${green("Done.")}`);
+// })();
