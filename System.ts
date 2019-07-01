@@ -2,11 +2,11 @@ import { Page, launch, Browser } from "puppeteer";
 import { invisibleCaptchaSolver } from "./CaptchaSolver";
 import { accountCreationRequest } from "./Fetch";
 import { readEmailsSince } from "./EmailReader";
-import * as config from './config.json'
+import * as config from "./config.json";
 
-const {EMAIL_CREDENTIALS, TWO_CAPTCHA_API_KEY, DOMAIN} = config;
+const { EMAIL_CREDENTIALS, TWO_CAPTCHA_API_KEY, DOMAIN } = config;
 
-class System {
+export class System {
 	browser?: Browser;
 	page?: Page;
 
@@ -29,6 +29,13 @@ class System {
 		// This token is so that only recent mails are analyzed and not all the inbox.
 		const dateSince = new Date(new Date().getTime());
 
+		console.log("Creating account with params", {
+			email,
+			username,
+			password,
+			date
+		});
+
 		if (!this.page || !this.browser) {
 			return;
 		}
@@ -37,6 +44,13 @@ class System {
 		}
 
 		if (!email || (email && !email.length)) {
+			if (!DOMAIN) {
+				console.log(
+					red(
+						"No email address was specified and no domain was found in config. Add a domain in config or specify the email address to create an account."
+					)
+				);
+			}
 			email = username + "@" + DOMAIN;
 		}
 
@@ -76,7 +90,7 @@ class System {
 
 		const solvedCaptcha = await invisibleCaptchaSolver(captchaKey, TWO_CAPTCHA_API_KEY);
 
-		console.log(solvedCaptcha.length > 100 ? "✔": "❌", "Obtained captcha response");
+		console.log(solvedCaptcha.length > 100 ? "✔" : "❌", "Obtained captcha response");
 
 		await accountCreationRequest({
 			username,
@@ -88,19 +102,19 @@ class System {
 
 		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
-		const links = await readEmailsSince({dateSince, subject: "ADDRESS_CONFIRMATION", emailCredentials: EMAIL_CREDENTIALS});
+		const links = await readEmailsSince({ dateSince, subject: "ADDRESS_CONFIRMATION", emailCredentials: EMAIL_CREDENTIALS });
 		console.log("Fetched links", links);
 
 		if (links.length > 0) {
 			await this.page.goto(links[0]);
 		} else {
 			console.log(`❌ Account was ${red(bold("not"))} successfully created.`);
-			return
+			return;
 		}
 
 		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
-		const confirmationEmail = await readEmailsSince({dateSince, subject: "SUCCESSFUL_ACCOUNT_CREATION", emailCredentials: EMAIL_CREDENTIALS});
+		const confirmationEmail = await readEmailsSince({ dateSince, subject: "SUCCESSFUL_ACCOUNT_CREATION", emailCredentials: EMAIL_CREDENTIALS });
 		if (confirmationEmail.length > 0) {
 			console.log("✔", green("Account was successfully created."));
 		} else {
