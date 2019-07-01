@@ -121,10 +121,10 @@ class System {
 	}
 }
 
-const red = (text: string): string => `\x1b[31m${text}\x1b[0m`;
-const green = (text: string): string => `\x1b[32m${text}\x1b[0m`;
-const yellow = (text: string): string => `\x1b[33m${text}\x1b[0m`;
-const bold = (text: string): string => `\x1b[1m${text}\x1b[0m`;
+export const red = (text: string): string => `\x1b[31m${text}\x1b[0m`;
+export const green = (text: string): string => `\x1b[32m${text}\x1b[0m`;
+export const yellow = (text: string): string => `\x1b[33m${text}\x1b[0m`;
+export const bold = (text: string): string => `\x1b[1m${text}\x1b[0m`;
 
 // (async () => {
 // 	const system = new System();

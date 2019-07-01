@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"start": "tsc && node dist/System.js"
+		"start": "tsc && node dist/CLI.js"
 	},
 	"dependencies": {
 		"@types/imap": "^0.8.29",
