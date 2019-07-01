@@ -77,17 +77,33 @@ class System {
 			date
 		});
 
-		// Wait for a couple of seconds for the email to be sent
+		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
 
-		console.log("Reading emails since")
-		const links = await readEmailsSince(dateSince);
+		console.log("Reading emails since");
+		const links = await readEmailsSince(dateSince, "ADDRESS_CONFIRMATION");
 
 		console.log("Gathered a total of", links.length, "links.");
 
 		console.log(links);
-		
-		await this.page.goto(links[0])
+
+		if (links.length > 0) {
+			await this.page.goto(links[0]);
+		} else {
+			console.log("Account was not successfully created.");
+			return;
+		}
+
+		// Wait for a few seconds for the email to be sent
+		await this.page.waitFor(10_000);
+
+		const confirmationEmail = await readEmailsSince(dateSince, "SUCCESSFUL_ACCOUNT_CREATION");
+
+		if (confirmationEmail.length > 0) {
+			console.log("Account was successfully created.");
+		} else {
+			console.log("Account was not successfully created.");
+		}
 	};
 
 	async checkFields(page: Page) {
@@ -108,8 +124,9 @@ class System {
 	await system.launchBrowser();
 	await system.createAccount({
 		email: "",
-		username: "Heyatyuiopti",
+		username: "Heyyuipti",
 		password: "yessai123!",
-		date: { day: 6, month: 3, year: 1994 }
+		date: { day: 6, month: 3, year: 1996 }
 	});
+	console.log("Done.");
 })();

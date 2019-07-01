@@ -1,7 +1,7 @@
 import * as Imap from "imap";
 import { EMAIL_CREDENTIALS } from "./config";
 
-export const readEmailsSince = async (dateSince: Date) => {
+export const readEmailsSince = async (dateSince: Date, subject: "ADDRESS_CONFIRMATION" | "SUCCESSFUL_ACCOUNT_CREATION") => {
 	const newLinks: string[] = [];
 
 	await new Promise((resolve, reject) => {
@@ -48,26 +48,42 @@ export const readEmailsSince = async (dateSince: Date) => {
 								const body = emailBody.toString("utf-8");
 								const date = emailDate.toString("utf-8");
 
-								const urlIndex = body.indexOf("https://www.dofus.com/fr/mmorpg/jouer?guid=");
 								const dateIndexes = [date.indexOf("undefinedDate: ") + "undefinedDate: ".length, date.indexOf("+0000")];
+								const utcMailDate = new Date(
+									new Date(date.substring(dateIndexes[0], dateIndexes[1])).getTime() -
+										new Date().getTimezoneOffset() * 60 * 1000
+								);
+								
+								if (subject === "ADDRESS_CONFIRMATION") {
+									const urlIndex = body.indexOf("https://www.dofus.com/fr/mmorpg/jouer?guid=");
+									
 
-								if (urlIndex != -1) {
-									const url = body
-										.substr(urlIndex, 300)
-										.split(" ]")[0]
-										.replace(/=\r\n/g, "")
-										.replace(/=3D/g, "=");
+									if (urlIndex != -1) {
+										const url = body
+											.substr(urlIndex, 300)
+											.split(" ]")[0]
+											.replace(/=\r\n/g, "")
+											.replace(/=3D/g, "=");
 
-									const utcMailDate = new Date(
-										new Date(date.substring(dateIndexes[0], dateIndexes[1])).getTime() -
-											new Date().getTimezoneOffset() * 60 * 1000
-									);
-									console.log(utcMailDate, (utcMailDate.getTime() - dateSince.getTime()) / (60 * 1000));
-									console.log(url + "\n");
+										
+										console.log(utcMailDate, (utcMailDate.getTime() - dateSince.getTime()) / (60 * 1000));
+										console.log(url + "\n");
 
-									if (utcMailDate.getTime() > dateSince.getTime()) {
-										newLinks.push(url);
+										if (utcMailDate.getTime() > dateSince.getTime()) {
+											newLinks.push(url);
+										}
 									}
+								}else{
+									const urlIndex = body.indexOf("Bienvenue dans la communauté Ankama");
+
+									if (urlIndex != -1) {
+										console.log(utcMailDate, (utcMailDate.getTime() - dateSince.getTime()) / (60 * 1000));
+										console.log("Account successfully created.");
+
+										if (utcMailDate.getTime() > dateSince.getTime()) {
+											newLinks.push("Successful account creation");
+										}
+									}	
 								}
 							});
 						});
