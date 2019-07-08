@@ -1,4 +1,6 @@
 {
+	"name": "bbf-cli",
+	"version": "0.0.1",
 	"scripts": {
 		"start": "tsc && node dist/CLI.js"
 	},
@@ -10,5 +12,9 @@
 		"node-fetch": "^2.6.0",
 		"puppeteer": "^1.17.0",
 		"typescript": "^3.5.2"
+	},
+	"main": "dist/CLI.js",
+	"bin": {
+		"bbf": "dist/CLI.js"
 	}
 }
