@@ -64,6 +64,7 @@ const createAccount = async ({ email, username, password, date }) => {
             date
         });
         console.log(`✔ ${System_1.green("Done.")}`);
+        process.exit();
     }
     else {
         console.log("No config file found. Put your config file in the root directory or create one using one of the following commands:\n\nbbf\nbbf init");

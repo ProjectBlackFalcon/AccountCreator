@@ -50,7 +50,9 @@ class System {
             await this.page.waitFor(500);
             let errorFields = await this.checkFields(this.page);
             if (errorFields.length) {
-                console.log("Field error " + JSON.stringify(errorFields));
+                errorFields.map(error => {
+                    console.log(exports.red("Error creating account: " + error.value));
+                });
                 return;
             }
             console.log("No errors. Proceeding to captcha solving & account creation.");
