@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { existsSync, writeFileSync, fstat } from "fs";
 import { createInterface } from "readline";
 import { green, bold, red, System } from "./System";
@@ -128,11 +130,26 @@ const parseArguments = () => {
 			date.year = parseInt(args["date"].split("/")[2])
 			
 			if(isNaN(date.day) || isNaN(date.month) || isNaN(date.year)){
-				console.log(red("Date needs to be of format dD/mM/YYYY with numbers"));
-				process.exit()
+				console.log(red("Date needs to be of format dD/mM/YYYY with numbers. Setting date to 10/10/1980."));
+				date.year = 1980
+				date.month = 10
+				date.day = 10
 			}
 			
-			date = {day: 1, month: 1, year: 1996}
+			if(date.year < 1920 || date.year > 2000){
+				console.log(red("Invalid year. Setting year to 1980."))
+				date.year = 1980
+			}
+			
+			if(date.month > 12 || date.month < 1){
+				console.log(red("Invalid month. Setting month to 10."))
+				date.month = 10
+			}
+			
+			if(date.day > 31 || date.day < 1){
+				console.log(red("Invalid day. Setting day to 10."))
+				date.day = 10
+			}
 		}
 		
 		rl.close()

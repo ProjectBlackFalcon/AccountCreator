@@ -1,5 +1,5 @@
 {
-	"name": "bbf-cli",
+	"name": "bbf",
 	"version": "0.0.1",
 	"scripts": {
 		"start": "tsc && node dist/CLI.js"

@@ -38,4 +38,4 @@ If you already have a configuration file, you're all set! Create accounts using 
 bbf create --username=<DESIRED_USERNAME> --password=<DESIRED_PASSWORD> --date=<dD/mM/YYYY> --email=<xxx@xxx.xx>
 ```
 
-The email is optional if you have setup a "domain" in your configuration file. If no email is specified and a domain is present in your `config.json`, the email will automatically be created according to: <DESIRED_USERNAME>@<DOMAIN>.
+The email is optional if you have setup a "domain" in your configuration file. If no email is specified and a domain is present in your `config.json`, the email will automatically be created according to: DESIRED_USERNAME@DOMAIN.

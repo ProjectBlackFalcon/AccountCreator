@@ -106,12 +106,11 @@ export class System {
 		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
 		const links = await readEmailsSince({ dateSince, subject: "ADDRESS_CONFIRMATION", emailCredentials: EMAIL_CREDENTIALS });
-		console.log("Fetched links", links);
 
 		if (links.length > 0) {
 			await this.page.goto(links[0]);
 		} else {
-			console.log(`❌ Account was ${red(bold("not"))} successfully created.`);
+			console.log(`❌ Account was ${red(bold("not"))} successfully created. Possible reasons: the captcha was badly resolved or your IP is flagged.`);
 			return;
 		}
 
@@ -121,7 +120,7 @@ export class System {
 		if (confirmationEmail.length > 0) {
 			console.log("✔", green("Account was successfully created."));
 		} else {
-			console.log(`❌ Account was ${red(bold("not"))} successfully created.`);
+			console.log(`❌ Account was ${red(bold("not"))} successfully created. Possible reasons: the captcha was badly resolved or your IP is flagged.`);
 		}
 	};
 
