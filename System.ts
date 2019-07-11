@@ -2,14 +2,27 @@ import { Page, launch, Browser } from "puppeteer";
 import { invisibleCaptchaSolver } from "./CaptchaSolver";
 import { accountCreationRequest } from "./Fetch";
 import { readEmailsSince } from "./EmailReader";
-import * as config from "./config.json";
-
-const { EMAIL_CREDENTIALS, TWO_CAPTCHA_API_KEY, DOMAIN } = config;
 
 export class System {
 	browser?: Browser;
 	page?: Page;
+	EMAIL_CREDENTIALS: {
+		user: string;
+		password: string;
+		host: string;
+		port: number;
+		tls: boolean;
+	};
+	TWO_CAPTCHA_API_KEY: string;
+	DOMAIN: string;
 
+	constructor(){
+		const config = require('./config.json');
+		this.EMAIL_CREDENTIALS = config.EMAIL_CREDENTIALS
+		this.TWO_CAPTCHA_API_KEY = config.TWO_CAPTCHA_API_KEY
+		this.DOMAIN = config.DOMAIN;
+	}
+	
 	launchBrowser = async () => {
 		this.browser = await launch({ headless: true });
 		[this.page] = await this.browser.pages();
@@ -44,14 +57,14 @@ export class System {
 		}
 
 		if (!email || (email && !email.length)) {
-			if (!DOMAIN) {
+			if (!this.DOMAIN) {
 				console.log(
 					red(
 						"No email address was specified and no domain was found in config. Add a domain in config or specify the email address to create an account."
 					)
 				);
 			}
-			email = username + "@" + DOMAIN;
+			email = username + "@" + this.DOMAIN;
 		}
 
 		await this.page.goto("https://www.dofus.com/fr/creer-un-compte");
@@ -91,7 +104,7 @@ export class System {
 
 		console.log("Obtained captcha key", captchaKey);
 
-		const solvedCaptcha = await invisibleCaptchaSolver(captchaKey, TWO_CAPTCHA_API_KEY);
+		const solvedCaptcha = await invisibleCaptchaSolver(captchaKey, this.TWO_CAPTCHA_API_KEY);
 
 		console.log(solvedCaptcha.length > 100 ? "✔" : "❌", "Obtained captcha response");
 
@@ -105,7 +118,7 @@ export class System {
 
 		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
-		const links = await readEmailsSince({ dateSince, subject: "ADDRESS_CONFIRMATION", emailCredentials: EMAIL_CREDENTIALS });
+		const links = await readEmailsSince({ dateSince, subject: "ADDRESS_CONFIRMATION", emailCredentials: this.EMAIL_CREDENTIALS });
 
 		if (links.length > 0) {
 			await this.page.goto(links[0]);
@@ -116,7 +129,7 @@ export class System {
 
 		// Wait for a few seconds for the email to be sent
 		await this.page.waitFor(10_000);
-		const confirmationEmail = await readEmailsSince({ dateSince, subject: "SUCCESSFUL_ACCOUNT_CREATION", emailCredentials: EMAIL_CREDENTIALS });
+		const confirmationEmail = await readEmailsSince({ dateSince, subject: "SUCCESSFUL_ACCOUNT_CREATION", emailCredentials: this.EMAIL_CREDENTIALS });
 		if (confirmationEmail.length > 0) {
 			console.log("✔", green("Account was successfully created."));
 		} else {

@@ -5,7 +5,6 @@ import { createInterface } from "readline";
 import { green, bold, red, System } from "./System";
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
-const system = new System();
 
 const _question = async (text: string): Promise<string> => {
 	return await new Promise((resolve, reject) => {
@@ -78,6 +77,7 @@ const createAccount = async ({
 	date: { day: number; month: number; year: number };
 }) => {
 	if (existsSync("config.json")) {
+		const system = new System();
 		await system.launchBrowser();
 		await system.createAccount({
 			email: email ? email : "",
