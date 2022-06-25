@@ -9,7 +9,7 @@
 		"@types/node-fetch": "^2.3.7",
 		"@types/puppeteer": "^1.12.4",
 		"imap": "^0.8.19",
-		"node-fetch": "^2.6.0",
+		"node-fetch": "^2.6.7",
 		"puppeteer": "^1.17.0",
 		"typescript": "^3.5.2"
 	},
